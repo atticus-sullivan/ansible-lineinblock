@@ -28,15 +28,21 @@ options:
   start_delimiter:
     description:
       - The string that marks the beginning of the block.
-      - Default is set for unattended-upgrade configuration.
       - Required
     type: str
   end_delimiter:
     description:
       - The string that marks the end of the block.
-      - Default is set for unattended-upgrade configuration.
       - Required.
     type: str
+  delimiter:
+    description:
+      - Tuple of two strings in order to be aware of nesting in the configuration block.
+      - Usually start_delimiter contains delimiter[0] and end_delimiter contains delimiter[1].
+      - The module only checks for end_delimiter if the brace_count is at 0 (occurences of delimiter[0] increment the count, delimiter[1] decrements the count).
+      - Default is for typical config files where {} are used for grouping.
+    type: str
+    default: ("{", "}")
   state:
     description:
       - Whether the line should be present or absent in the block.
@@ -136,9 +142,9 @@ import tempfile
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native
 
-def process_config_file(file_path, line_to_insert, start_delimiter, end_delimiter, state='present'):
+def process_config_file(file_path, line_to_insert, start_delimiter, end_delimiter, delimiter, state):
     """
     Process a configuration file to insert or remove a line within a delimited block.
 
@@ -147,6 +153,7 @@ def process_config_file(file_path, line_to_insert, start_delimiter, end_delimite
         line_to_insert (str): Line to insert or remove
         start_delimiter (str): String that marks the beginning of the block
         end_delimiter (str): String that marks the end of the block
+        delimiter (tuple[str,str]): Delimiter which needs to be taken into account because of potential nesting
         state (str): Either 'present' to ensure line exists or 'absent' to remove it
 
     Returns:
@@ -170,16 +177,15 @@ def process_config_file(file_path, line_to_insert, start_delimiter, end_delimite
     for i, line in enumerate(lines_stripped):
         if not in_block and line == start_delimiter:
             in_block = True
-            # TODO needs to be variable?
-            brace_count = start_delimiter.count('{') # Count the opening brace
+            brace_count = start_delimiter.count(delimiter[0]) # Count the opening brace
             block_start_index = i
             continue
 
         if in_block:
             # Count nested braces to find the matching end
             # TODO doesn't account for braces inside comments, strings, or escaped characters
-            open_braces = line.count('{') # TODO needs to be variable?
-            close_braces = line.count('}') # TODO needs to be variable?
+            open_braces = line.count(delimiter[0])
+            close_braces = line.count(delimiter[1])
             brace_count += open_braces - close_braces
 
             if brace_count == 0 and line == end_delimiter:
@@ -274,6 +280,7 @@ def main():
         line=dict(type='str', required=True, aliases=["value"]),
         start_delimiter=dict(type='str', required=True),
         end_delimiter=dict(type='str', required=True),
+        delimiter=dict(type='tuple[str,str]', default=["{","}"]),
         backup=dict(type='bool', default=False),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         create=dict(type='bool', default=False),
@@ -302,6 +309,7 @@ def main():
     line_to_insert = params['line']
     start_delimiter = params['start_delimiter']
     end_delimiter = params['end_delimiter']
+    delimiter = params['delimiter']
     backup = params['backup']
     state = params['state']
     create = params['create']
@@ -364,6 +372,7 @@ def main():
         line_to_insert, 
         start_delimiter, 
         end_delimiter,
+        delimiter,
         state
     )
 
