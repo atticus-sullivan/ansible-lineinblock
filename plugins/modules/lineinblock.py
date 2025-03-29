@@ -45,6 +45,12 @@ options:
       - Default is for typical config files where {} are used for grouping.
     type: str
     default: ["{", "}"]
+  delimiter_counting:
+    description:
+      - When set to false, this disables the mechanism described with delimiter.
+      - You might need/want this because the delimiter counting procedure is not robust against escaping and/or comments.
+    type: bool
+    default: True
   state:
     description:
       - Whether the line should be present or absent in the block.
@@ -146,7 +152,7 @@ import tempfile
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_bytes, to_native
 
-def process_config_file(file_path, line_to_insert, start_delimiter, end_delimiter, delimiter, state):
+def process_config_file(file_path, line_to_insert, start_delimiter, end_delimiter, delimiter, delimiter_counting, state):
     """
     Process a configuration file to insert or remove a line within a delimited block.
 
@@ -156,6 +162,7 @@ def process_config_file(file_path, line_to_insert, start_delimiter, end_delimite
         start_delimiter (str): String that marks the beginning of the block
         end_delimiter (str): String that marks the end of the block
         delimiter (tuple[str,str]): Delimiter which needs to be taken into account because of potential nesting
+        delimiter_counting (bool): Whether to count delimiters (if this is set the value of delimiter is ignored)
         state (str): Either 'present' to ensure line exists or 'absent' to remove it
 
     Returns:
@@ -179,16 +186,17 @@ def process_config_file(file_path, line_to_insert, start_delimiter, end_delimite
     for i, line in enumerate(lines_stripped):
         if not in_block and line == start_delimiter:
             in_block = True
-            brace_count = start_delimiter.count(delimiter[0]) # Count the opening brace
+            if delimiter_counting:
+                brace_count = start_delimiter.count(delimiter[0]) # Count the opening brace
             block_start_index = i
             continue
 
         if in_block:
             # Count nested braces to find the matching end
-            # TODO doesn't account for braces inside comments, strings, or escaped characters
-            open_braces = line.count(delimiter[0])
-            close_braces = line.count(delimiter[1])
-            brace_count += open_braces - close_braces
+            if delimiter_counting:
+                open_braces = line.count(delimiter[0])
+                close_braces = line.count(delimiter[1])
+                brace_count += open_braces - close_braces
 
             if brace_count == 0 and line == end_delimiter:
                 block_end_index = i
@@ -283,6 +291,7 @@ def main():
         start_delimiter=dict(type='str', required=True),
         end_delimiter=dict(type='str', required=True),
         delimiter=dict(type='list', default=["{","}"]),
+        delimiter_counting=dict(type='bool', default=True),
         backup=dict(type='bool', default=False),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         create=dict(type='bool', default=False),
@@ -312,6 +321,7 @@ def main():
     start_delimiter = params['start_delimiter']
     end_delimiter = params['end_delimiter']
     delimiter = params['delimiter']
+    delimiter_counting = params['delimiter_counting']
     backup = params['backup']
     state = params['state']
     create = params['create']
@@ -375,7 +385,8 @@ def main():
         start_delimiter, 
         end_delimiter,
         delimiter,
-        state
+        delimiter_counting,
+        state,
     )
 
     # Update diff if needed
