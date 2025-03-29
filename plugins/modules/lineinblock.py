@@ -4,9 +4,10 @@
 DOCUMENTATION = r'''
 ---
 module: lineinblock
-short_description: Insert or remove a line within a delimited block in a file
+short_description: Append or remove a line within a delimited block in a file
 description:
   - This module ensures a particular line is present or absent within a delimited block in a file.
+  - If the line was absent, it always gets appended to the block!
   - This is primarily useful for configuration files with structured blocks (like unattended-upgrade configs).
   - See the M(ansible.builtin.lineinfile) module if you want to modify a single line in a file.
   - See the M(ansible.builtin.blockinfile) module if you want to insert/update/remove a block of lines.
@@ -28,14 +29,14 @@ options:
     description:
       - The string that marks the beginning of the block.
       - Default is set for unattended-upgrade configuration.
+      - Required
     type: str
-    default: 'Unattended-Upgrade::Origins-Pattern {'
   end_delimiter:
     description:
       - The string that marks the end of the block.
       - Default is set for unattended-upgrade configuration.
+      - Required.
     type: str
-    default: '};'
   state:
     description:
       - Whether the line should be present or absent in the block.
@@ -71,7 +72,7 @@ seealso:
   - module: ansible.builtin.lineinfile
   - module: ansible.builtin.blockinfile
 author:
-  - Your Name (@yourgithub)
+  - Lukas Heindl (@atticus-sullivan)
 '''
 
 EXAMPLES = r'''
