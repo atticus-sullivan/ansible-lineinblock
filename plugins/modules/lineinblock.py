@@ -258,7 +258,7 @@ def check_file_attrs(module, changed, message, diff):
         tuple: (message, changed) with updated status
     """
 
-    file_args = module.load_file_common_args(module.params)
+    file_args = module.load_file_common_arguments(module.params)
     if module.set_fs_attributes_if_different(file_args, False, diff=diff):
         if changed:
             message += " and "
@@ -343,7 +343,7 @@ def main():
             result['message'] = f'File created with block {"and line " if state=="present" else ""}inserted'
 
             # Set file attributes if specified
-            file_args = module.load_file_common_args(module.params)
+            file_args = module.load_file_common_arguments(module.params)
             module.set_fs_attributes_if_different(file_args, True)
 
             module.exit_json(**result)
