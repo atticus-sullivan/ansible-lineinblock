@@ -39,12 +39,12 @@ options:
     required: true
   delimiter:
     description:
-      - Tuple of two strings in order to be aware of nesting in the configuration block.
+      - Tuple/List of two strings in order to be aware of nesting in the configuration block.
       - Usually start_delimiter contains delimiter[0] and end_delimiter contains delimiter[1].
       - The module only checks for end_delimiter if the brace_count is at 0 (occurences of delimiter[0] increment the count, delimiter[1] decrements the count).
       - Default is for typical config files where {} are used for grouping.
     type: str
-    default: ("{", "}")
+    default: ["{", "}"]
   state:
     description:
       - Whether the line should be present or absent in the block.
@@ -282,7 +282,7 @@ def main():
         line=dict(type='str', required=True, aliases=["value"]),
         start_delimiter=dict(type='str', required=True),
         end_delimiter=dict(type='str', required=True),
-        delimiter=dict(type='tuple[str,str]', default=("{","}")),
+        delimiter=dict(type='list', default=["{","}"]),
         backup=dict(type='bool', default=False),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         create=dict(type='bool', default=False),
