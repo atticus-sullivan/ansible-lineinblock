@@ -282,7 +282,7 @@ def main():
         line=dict(type='str', required=True, aliases=["value"]),
         start_delimiter=dict(type='str', required=True),
         end_delimiter=dict(type='str', required=True),
-        delimiter=dict(type='tuple[str,str]', default=["{","}"]),
+        delimiter=dict(type='tuple[str,str]', default=("{","}")),
         backup=dict(type='bool', default=False),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         create=dict(type='bool', default=False),
