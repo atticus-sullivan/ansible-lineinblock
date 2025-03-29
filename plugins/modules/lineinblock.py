@@ -272,7 +272,7 @@ def main():
         path=dict(type='path', required=True, aliases=["dest", "name"]),
         line=dict(type='str', required=True, aliases=["value"]),
         start_delimiter=dict(type='str', required=True),
-        end_delimiter=dict(type='str', required=True, default='};'),
+        end_delimiter=dict(type='str', required=True),
         backup=dict(type='bool', default=False),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         create=dict(type='bool', default=False),
