@@ -30,11 +30,13 @@ options:
       - The string that marks the beginning of the block.
       - Required
     type: str
+    required: true
   end_delimiter:
     description:
       - The string that marks the end of the block.
       - Required.
     type: str
+    required: true
   delimiter:
     description:
       - Tuple of two strings in order to be aware of nesting in the configuration block.
